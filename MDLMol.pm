@@ -1,6 +1,6 @@
 package Chemistry::File::MDLMol;
-$VERSION = '0.18';
-# $Id: MDLMol.pm,v 1.9 2005/01/27 19:06:34 itubert Exp $
+$VERSION = '0.19';
+# $Id: MDLMol.pm,v 1.10 2005/02/01 01:35:08 itubert Exp $
 
 use base "Chemistry::File";
 use Chemistry::Mol;
@@ -145,7 +145,7 @@ sub write_string {
 
 =head1 VERSION
 
-0.18
+0.19
 
 =head1 SEE ALSO
 
