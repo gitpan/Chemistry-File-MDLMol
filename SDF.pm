@@ -1,6 +1,6 @@
 package Chemistry::File::SDF;
-$VERSION = '0.16';
-# $Id: SDF.pm,v 1.5 2004/06/30 23:43:11 itubert Exp $
+$VERSION = '0.17';
+# $Id: SDF.pm,v 1.6 2004/07/21 19:35:36 itubert Exp $
 
 use base "Chemistry::File";
 use Chemistry::Mol;
@@ -139,7 +139,7 @@ a given name. The SDF format description is not entirely clear in this regard.
 
 =head1 VERSION
 
-0.16
+0.17
 
 =head1 SEE ALSO
 
