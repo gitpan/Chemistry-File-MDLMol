@@ -1,20 +1,24 @@
 package Chemistry::File::MDLMol;
-$VERSION = '0.10';
+$VERSION = '0.15';
 
 use base "Chemistry::File";
 use Chemistry::Mol;
 use strict;
+use warnings;
 
 =head1 NAME
 
-Chemistry::File::MDLMol - MDL molfile reader
+Chemistry::File::MDLMol - MDL molfile reader/writer
 
 =head1 SYNOPSIS
 
     use Chemistry::File::MDLMol;
 
+    # read a molecule
     my $mol = Chemistry::Mol->read('myfile.mol');
-    print $mol->print;
+
+    # write a molecule
+    $mol->write("myfile.mol");
 
 =cut
 
@@ -29,9 +33,11 @@ This module automatically registers the 'mdl' format with Chemistry::Mol.
 The first three lines of the molfile are stored as $mol->name, 
 $mol->attr("mdlmol/line2"), and $mol->attr("mdlmol/comment").
 
-This version only reads the basic connection table: atomic symbols, 
+This version only reads and writes the basic connection table: atomic symbols, 
 coordinates, bonds and bond types. It doesn't read charges, isotopes, or 
 any extended properties yet.
+
+This module is part of the PerlMol project, L<http://www.perlmol.org>.
 
 =cut
 
@@ -58,7 +64,8 @@ sub parse_string {
     for(1 .. $na) { # for each atom...
         $_ = shift @lines;
         my ($x, $y, $z, $symbol) = unpack("A10A10A10xA3", $_);
-        $mol->add_atom($atom_class->new(symbol=>$symbol, coords=>[$x, $y, $z], id => "a".++$n));
+        $mol->add_atom($atom_class->new(
+            symbol=>$symbol, coords=>[$x, $y, $z], id => "a".++$n));
     }
 
 
@@ -71,7 +78,7 @@ sub parse_string {
             $bond_class->new(
                 type => $type, 
                 atoms => [$mol->{byId}{"a$a1"}, $mol->{byId}{"a$a2"}],
-                order => $order
+                order => $order || 1
             )
         );
     }
@@ -91,7 +98,45 @@ sub file_is {
     return 0;
 }
 
+
+sub write_string {
+    my ($self, $mol, %opts) = @_;
+
+    my $s = sprintf "%s\n      perlmol   \n\n", $mol->name;
+    $s .= sprintf "%3i%3i%3i%3i%3i%3i%3i%3i%3i%3i%3i%6s\n", 
+        0+$mol->atoms, 0+$mol->bonds, 
+        0, 0, 0, 0, 0, 0, 0, 0, 999, "V2000";   # "counts" line
+
+    my $i = 1;
+    my %idx_map;
+    for my $atom ($mol->atoms) {
+        my ($x, $y, $z) = $atom->coords->array;
+
+        $s .= sprintf 
+            "%10.4f%10.4f%10.4f %-3s%2i%3i%3i%3i%3i%3i%3i%3i%3i%3i%3i%3i\n",
+            $x, $y, $z, $atom->symbol,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+        $idx_map{$atom->id} = $i++;
+    }
+
+    for my $bond ($mol->bonds) {
+        my ($a1, $a2) = map {$idx_map{$_->id}} $bond->atoms;
+        $s .= sprintf "%3i%3i%3i%3i%3i%3i%3i\n", 
+            $a1, $a2, $bond->order,
+            0, 0, 0, 0;
+    }
+
+    $s .= "M  END\n";
+    $s;
+}
+
+
+
 1;
+
+=head1 VERSION
+
+0.15
 
 =head1 SEE ALSO
 
@@ -100,6 +145,8 @@ L<Chemistry::Mol>
 The MDL file format specification.
 L<http://www.mdl.com/downloads/public/ctfile/ctfile.pdf> or
 Arthur Dalby et al., J. Chem. Inf. Comput. Sci, 1992, 32, 244-255.
+
+The PerlMol website L<http://www.perlmol.org/>
 
 =head1 AUTHOR
 
