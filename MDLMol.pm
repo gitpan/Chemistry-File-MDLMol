@@ -1,6 +1,6 @@
 package Chemistry::File::MDLMol;
-$VERSION = '0.20';
-# $Id: MDLMol.pm,v 1.11 2005/05/20 19:08:45 itubert Exp $
+$VERSION = '0.21';
+# $Id: MDLMol.pm,v 1.13 2009/05/10 19:51:50 itubert Exp $
 
 use base "Chemistry::File";
 use Chemistry::Mol;
@@ -64,15 +64,31 @@ in conjunction with L<Chemistry::Pattern>. However, support for query properies
 is currently read-only, and the other properties listed in the specification
 are not supported yet.
 
-When an atom or a bond uses one of these special query options, the condition
-is represented as a Perl subroutine. The generated code can be read from the
-'mdlmol/test_sub' attribute:
+So that atom and bond objects can use these special query options, the
+conditions are represented as Perl subroutines. The generated code can be
+read from the 'mdlmol/test_sub' attribute:
 
     $atom->attr('mdlmol/test_sub');
     $bond->attr('mdlmol/test_sub');
  
 This may be useful for debugging, such as when an atom doesn't seem to match as
 expected.
+
+=head2 Aromatic Queries
+
+To be able to search for aromatic substructures are represented by Kekule
+structures, molfiles that are read as patterns (with
+C<Chemistry::Pattern->read) are aromatized automatically by using the
+L<Chemistry::Ring> module. The default bond test from Chemistry::Pattern::Bond
+is overriden by one that checks the aromaticity in addition to the bond order.
+The test is,
+
+    $patt->aromatic ?  $bond->aromatic 
+        : (!$bond->aromatic && $patt->order == $bond->order);
+
+That is, aromatic pattern bonds match aromatic bonds, and aliphatic pattern
+bonds match aliphatic bonds with the same bond order.
+    
 
 =cut
 
@@ -94,7 +110,7 @@ my %BOND_TYPE_EXPR = (
     5 => '($bond->order == 1 or $bond->order == 2)',
     6 => '($bond->order == 1 or $bond->aromatic)',
     7 => '($bond->order == 2 or $bond->aromatic)',
-    8 => '(1)',
+    8 => '(1)',                                         # any bond
 );
 
 my %BOND_TOPOLOGY_EXPR = (
@@ -194,6 +210,11 @@ sub read_mol {
 
     $mol->add_implicit_hydrogens;
 
+    if ($mol->isa('Chemistry::Pattern')) {
+        require Chemistry::Ring;
+        Chemistry::Ring::aromatize_mol($mol);
+    }
+
     return $mol;
 }
 
@@ -216,8 +237,18 @@ SUB
         print "MDLMol bond($i) sub: <<<<$sub_txt>>>\n" if $DEBUG;
         $bond->attr('mdlmol/test_sub' => $sub_txt);
         $bond->test_sub(eval $sub_txt);
+    } else { # default bond sub
+        $bond->test_sub(\&default_bond_test);
     }
 }
+
+sub default_bond_test {
+    no warnings;
+    my ($patt, $bond) = @_;
+    $patt->aromatic ?  $bond->aromatic 
+        : (!$bond->aromatic && $patt->order == $bond->order);
+}
+
 
 sub M_CHG {
     my ($self, $mol, $line) = @_;
@@ -340,7 +371,7 @@ sub write_string {
 
 =head1 VERSION
 
-0.20
+0.21
 
 =head1 SEE ALSO
 
@@ -358,7 +389,7 @@ Ivan Tubert-Brohman <itub@cpan.org>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2005 Ivan Tubert-Brohman. All rights reserved. This program is
+Copyright (c) 2009 Ivan Tubert-Brohman. All rights reserved. This program is
 free software; you can redistribute it and/or modify it under the same terms as
 Perl itself.
 

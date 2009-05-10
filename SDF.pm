@@ -1,6 +1,6 @@
 package Chemistry::File::SDF;
-$VERSION = '0.20';
-# $Id: SDF.pm,v 1.9 2005/05/20 19:08:45 itubert Exp $
+$VERSION = '0.21';
+# $Id: SDF.pm,v 1.10 2009/05/10 19:51:50 itubert Exp $
 
 use base "Chemistry::File";
 use Chemistry::Mol;
@@ -165,7 +165,7 @@ Also note that SDF data field names are considered to be case-sensitive.
 
 =head1 VERSION
 
-0.20
+0.21
 
 =head1 SEE ALSO
 
@@ -183,7 +183,7 @@ Ivan Tubert-Brohman <itub@cpan.org>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2005 Ivan Tubert-Brohman. All rights reserved. This program is
+Copyright (c) 2009 Ivan Tubert-Brohman. All rights reserved. This program is
 free software; you can redistribute it and/or modify it under the same terms as
 Perl itself.
 
