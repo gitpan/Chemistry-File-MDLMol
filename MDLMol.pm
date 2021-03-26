@@ -266,6 +266,15 @@ sub M_RAD {
     }
 }
 
+sub M_ISO {
+    my ($self, $mol, $line) = @_;
+    my ($m, $type, $n, %data) = split " ", $line;
+    while (my ($key, $val) = each %data) {
+        $val = $mol->atoms($key)->mass + $val;
+        $mol->atoms($key)->mass($val);
+    }
+}
+
 sub M_ALS {
     my ($self, $mol, $line) = @_;
 
